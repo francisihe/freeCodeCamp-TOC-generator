@@ -1,0 +1,23 @@
+{
+  "name": "freecodecamp-toc-generator",
+  "version": "1.0.0",
+  "description": "freeCodeCamp Table of Content Generator",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/francisihe/freeCodeCamp-TOC-generator.git"
+  },
+  "keywords": [
+    "freeCodeCamp",
+    "TOC"
+  ],
+  "author": "Francis Ihejirika",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/francisihe/freeCodeCamp-TOC-generator/issues"
+  },
+  "homepage": "https://github.com/francisihe/freeCodeCamp-TOC-generator#readme"
+}

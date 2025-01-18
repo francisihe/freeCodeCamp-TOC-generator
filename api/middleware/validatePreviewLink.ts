@@ -10,7 +10,7 @@ export const validatePreviewLink = (req: Request, res: Response, next: NextFunct
         RequestSchema.parse(req.body);
         next();
     } catch (error: any) {
-        console.error('Error validating preview link', error)
+        console.error('Error validating preview link', error.issues)
         res.status(400).json({
             success: false,
             message: error.errors[0].message

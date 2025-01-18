@@ -1,0 +1,88 @@
+{
+    "tocItems": [
+        {
+            "id": "heading-how-to-deploy-an-api-with-puppeteer-on-render-with-and-without-docker",
+            "text": "How To Deploy an API With Puppeteer On Render With And Without Docker",
+            "level": 3,
+            "link": "#heading-how-to-deploy-an-api-with-puppeteer-on-render-with-and-without-docker"
+        },
+        {
+            "id": "heading-introduction",
+            "text": "Introduction:",
+            "level": 3,
+            "link": "#heading-introduction"
+        },
+        {
+            "id": "heading-overview",
+            "text": "Overview:",
+            "level": 3,
+            "link": "#heading-overview"
+        },
+        {
+            "id": "heading-what-is-puppeteer",
+            "text": "What is Puppeteer?",
+            "level": 3,
+            "link": "#heading-what-is-puppeteer"
+        },
+        {
+            "id": "heading-method-1-deploying-to-render-without-using-a-dockerfile",
+            "text": "METHOD 1: Deploying To Render WITHOUT using a Dockerfile",
+            "level": 3,
+            "link": "#heading-method-1-deploying-to-render-without-using-a-dockerfile"
+        },
+        {
+            "id": "heading-step-1-prepare-your-api-directory",
+            "text": "Step 1: Prepare your API directory",
+            "level": 4,
+            "link": "#heading-step-1-prepare-your-api-directory"
+        },
+        {
+            "id": "heading-step-2-select-the-correct-language-branch-and-directory-on-render",
+            "text": "Step 2: Select the correct language, branch and directory on Render",
+            "level": 4,
+            "link": "#heading-step-2-select-the-correct-language-branch-and-directory-on-render"
+        },
+        {
+            "id": "heading-step-3-add-the-correct-build-and-start-commands-environment-variables-and-deploy-your-service",
+            "text": "Step 3: Add the correct build and start commands, environment variables and deploy your service",
+            "level": 4,
+            "link": "#heading-step-3-add-the-correct-build-and-start-commands-environment-variables-and-deploy-your-service"
+        },
+        {
+            "id": "heading-error-message-if-puppeteer-configuration-file-and-correct-build-commands-are-missing",
+            "text": "Error Message If Puppeteer Configuration File and Correct Build Commands Are Missing",
+            "level": 4,
+            "link": "#heading-error-message-if-puppeteer-configuration-file-and-correct-build-commands-are-missing"
+        },
+        {
+            "id": "heading-method-2-deploying-to-render-using-a-dockerfile",
+            "text": "METHOD 2: Deploying To Render using a Dockerfile",
+            "level": 3,
+            "link": "#heading-method-2-deploying-to-render-using-a-dockerfile"
+        },
+        {
+            "id": "heading-step-1-create-a-dockerfile-at-the-root-of-your-directory",
+            "text": "Step 1: Create a Dockerfile at the root of your directory",
+            "level": 4,
+            "link": "#heading-step-1-create-a-dockerfile-at-the-root-of-your-directory"
+        },
+        {
+            "id": "heading-step-2-select-docker-as-language-and-specify-the-dockerfile-path",
+            "text": "Step 2: Select Docker as Language and specify the Dockerfile path",
+            "level": 4,
+            "link": "#heading-step-2-select-docker-as-language-and-specify-the-dockerfile-path"
+        },
+        {
+            "id": "heading-quick-note-adding-your-installation-path-to-your-puppeteer-script",
+            "text": "Quick Note: Adding your installation path to your Puppeteer script",
+            "level": 3,
+            "link": "#heading-quick-note-adding-your-installation-path-to-your-puppeteer-script"
+        },
+        {
+            "id": "heading-conclusion",
+            "text": "Conclusion:",
+            "level": 3,
+            "link": "#heading-conclusion"
+        }
+    ]
+}

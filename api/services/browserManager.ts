@@ -8,7 +8,7 @@ let browserInitializing: Promise<void> | null = null;
 
 const createBrowser = async (): Promise<Browser> => {
     return await puppeteer.launch({
-        headless: false,
+        headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 };

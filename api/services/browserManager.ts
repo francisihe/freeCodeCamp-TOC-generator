@@ -1,5 +1,5 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { MAX_PAGES, PAGE_IDLE_TIMEOUT } from '../config/constants';
+import { MAX_PAGES, PAGE_IDLE_TIMEOUT, QUEUE_TIMEOUT } from '../config/constants';
 
 // Browser State
 let browser: Browser | null = null;
@@ -19,6 +19,21 @@ const createPage = async (browser: Browser): Promise<Page> => {
     return page;
 };
 
+const waitForAvailablePage = async (): Promise<Page | null> => {
+    const startTime = Date.now();
+    
+    while (Date.now() - startTime < QUEUE_TIMEOUT) {
+        const availablePage = pages.find(p => !p.inUse);
+        if (availablePage) {
+            availablePage.inUse = true;
+            return availablePage.page;
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    return null;
+};
+
 const initializeBrowser = async (): Promise<void> => {
     if (browserInitializing) {
         await browserInitializing;
@@ -27,7 +42,6 @@ const initializeBrowser = async (): Promise<void> => {
 
     if (browser) return;
     
-    // Initialize browser 
     browserInitializing = (async () => {
         try {
             browser = await createBrowser();
@@ -55,7 +69,6 @@ const cleanup = async (shouldCloseBrowser: boolean): Promise<void> => {
         }
     }
     
-    // Reset state
     pages = [];
     browser = null;
 };
@@ -63,10 +76,10 @@ const cleanup = async (shouldCloseBrowser: boolean): Promise<void> => {
 const cleanupUnusedPages = async (): Promise<void> => {
     if (!browser) return;
 
-    const unusedPages = pages.filter(pages => !pages.inUse);
-    if (unusedPages.length <= 1) return; // Keep at least one page open
+    const unusedPages = pages.filter(p => !p.inUse);
+    if (unusedPages.length <= 1) return;
 
-    for (const pageEntry of unusedPages.slice(1)) { // Start from second unused page
+    for (const pageEntry of unusedPages.slice(1)) {
         try {
             await pageEntry.page.close();
             const index = pages.indexOf(pageEntry);
@@ -94,21 +107,24 @@ const getPage = async (): Promise<Page> => {
             await initializeBrowser();
         }
         
-        // Find available page
         const availablePage = pages.find(p => !p.inUse);
         if (availablePage) {
             availablePage.inUse = true;
             return availablePage.page;
         }
         
-        // Create new page if under limit
         if (browser && pages.length < MAX_PAGES) {
             const newPage = await createPage(browser);
             pages.push({ page: newPage, inUse: true });
             return newPage;
         }
         
-        throw new Error('No pages available and at maximum capacity');
+        const waitedPage = await waitForAvailablePage();
+        if (waitedPage) {
+            return waitedPage;
+        }
+        
+        throw new Error('Request timed out while waiting for an available page');
         
     } catch (error) {
         if (error instanceof Error) {
@@ -123,19 +139,16 @@ const releasePage = async (pageToRelease: Page): Promise<void> => {
         const pageEntry = pages.find(p => p.page === pageToRelease);
         if (!pageEntry) return;
 
-        // Reset page state
         await pageEntry.page.goto('about:blank');
         await pageEntry.page.setRequestInterception(false);
         pageEntry.inUse = false;
 
-        // Schedule cleanup if all pages are free
         if (pages.every(p => !p.inUse)) {
             schedulePageCleanup();
         }
 
     } catch (error) {
         console.error('Error releasing page:', error);
-        // If page is broken, remove it and create a new one if needed
         const pageIndex = pages.findIndex(p => p.page === pageToRelease);
         if (pageIndex !== -1) {
             try {
@@ -146,7 +159,6 @@ const releasePage = async (pageToRelease: Page): Promise<void> => {
             pages.splice(pageIndex, 1);
         }
 
-        // Create a replacement page if browser is still active
         if (browser && pages.length < MAX_PAGES) {
             try {
                 const newPage = await createPage(browser);
@@ -168,15 +180,13 @@ const getStatus = (): {
     isActive: boolean;
     maxPages: number;
     uptime: number;
-} => {
-    return {
-        activePages: pages.length,
-        availablePages: pages.filter(p => !p.inUse).length,
-        isActive: browser !== null,
-        maxPages: MAX_PAGES,
-        uptime: browser ? process.uptime() : 0
-    };
-};
+} => ({
+    activePages: pages.length,
+    availablePages: pages.filter(p => !p.inUse).length,
+    isActive: browser !== null,
+    maxPages: MAX_PAGES,
+    uptime: browser ? process.uptime() : 0
+});
 
 export {
     getPage,

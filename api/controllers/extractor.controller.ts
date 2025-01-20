@@ -48,8 +48,14 @@ export const extractTOC = async (req: Request, res: Response): Promise<void> => 
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Internal server error';
-        const statusCode = errorMessage.includes('timeout') ? 504 : 500;
-        
+        let statusCode = 500;
+
+        if (errorMessage.includes('timeout')) {
+            statusCode = 504;
+        } else if (errorMessage.includes('waiting for an available page')) {
+            statusCode = 503;
+        }
+
         res.status(statusCode).json({
             success: false,
             message: errorMessage

@@ -15,6 +15,8 @@ interface APIResponse {
     };
 }
 
+const BULLET_POINTS = ['•', '○', '▪', '▫'];
+
 export default function App() {
     const [url, setUrl] = useState('');
     const [tocItems, setTocItems] = useState<TOCItem[]>([]);
@@ -34,7 +36,7 @@ export default function App() {
 
     const generateMarkdown = (items: TOCItem[]) => {
         return items.map(item => {
-            const indent = '  '.repeat(item.level - 1); // Subtract 1 since level starts at 1
+            const indent = '  '.repeat(item.level - 1);
             return `${indent}- [${item.text}](${item.link})`;
         }).join('\n');
     };
@@ -46,7 +48,7 @@ export default function App() {
                 if (!match) return null;
 
                 const [, indent, text, link] = match;
-                const level = (indent.length / 2) + 17;
+                const level = (indent.length / 2) + 1;
 
                 return {
                     id: `toc-${index}`,
@@ -56,6 +58,15 @@ export default function App() {
                 };
             })
             .filter((item): item is TOCItem => item !== null);
+    };
+
+    const getMinLevel = (items: TOCItem[]) => {
+        return Math.min(...items.map(item => item.level));
+    };
+
+    const getBulletPoint = (level: number, minLevel: number) => {
+        const relativeLevel = level - minLevel;
+        return BULLET_POINTS[relativeLevel % BULLET_POINTS.length];
     };
 
     const extractTOC = async () => {
@@ -102,19 +113,15 @@ export default function App() {
             setCopyStatus(type === 'markdown' ? 'markdown-copied' : 'preview-copied');
             setTimeout(() => setCopyStatus('idle'), 2000);
         } catch (err) {
-            console.error(err);
+            console.error(err)
             setError('Failed to copy to clipboard');
         }
-    };
-
-    // Helper function to get the minimum level from current TOC items
-    const getMinLevel = (items: TOCItem[]) => {
-        return Math.min(...items.map(item => item.level));
     };
 
     return (
         <div className="min-h-screen bg-gray-50 py-8 px-4">
             <div className="max-w-4xl mx-auto">
+                {/* Header */}
                 <div className="flex items-center gap-2 mb-8">
                     <h1 className="text-3xl font-bold text-gray-900">freeCodeCamp TOC Generator</h1>
                     <a
@@ -127,6 +134,7 @@ export default function App() {
                     </a>
                 </div>
 
+                {/* URL Input Section */}
                 <div className="bg-white rounded-lg shadow p-6 mb-6">
                     <div className="space-y-4">
                         <div className="relative">
@@ -163,9 +171,11 @@ export default function App() {
                     )}
                 </div>
 
+                {/* TOC Display Section */}
                 {tocItems.length > 0 && (
                     <div className="bg-white rounded-lg shadow">
                         <div className="grid md:grid-cols-2 gap-6 p-6">
+                            {/* Markdown Editor */}
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center">
                                     <h2 className="text-xl font-semibold text-gray-900">Markdown Editor</h2>
@@ -184,6 +194,7 @@ export default function App() {
                                 />
                             </div>
 
+                            {/* Preview */}
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center">
                                     <h2 className="text-xl font-semibold text-gray-900">Preview</h2>
@@ -193,7 +204,7 @@ export default function App() {
                                             copyToClipboard(
                                                 tocItems.map(item => {
                                                     const indent = '  '.repeat(item.level - minLevel);
-                                                    const bullet = item.level === minLevel ? '•' : '○';
+                                                    const bullet = getBulletPoint(item.level, minLevel);
                                                     return `${indent}${bullet} ${item.text}`;
                                                 }).join('\n'),
                                                 'preview'
@@ -218,7 +229,7 @@ export default function App() {
                                                     href={item.link}
                                                     className="text-gray-900 hover:text-blue-600 no-underline hover:underline"
                                                 >
-                                                    {item.level === minLevel ? '•' : '○'} {item.text}
+                                                    {getBulletPoint(item.level, minLevel)} {item.text}
                                                 </a>
                                             </div>
                                         ));

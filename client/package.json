@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && configure-netlify && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "configure-netlify": "bash scripts/configure-netlify.sh"
   },
   "dependencies": {
     "react": "^18.3.1",

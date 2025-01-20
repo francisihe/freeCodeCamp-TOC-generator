@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && configure-netlify && vite build",
+    "build": "configure-netlify && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "configure-netlify": "bash scripts/configure-netlify.sh"

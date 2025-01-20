@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface TOCItem {
     id: string;
     text: string;
     level: number;
-    indentLevel: number;
     link: string;
 }
 
@@ -16,14 +15,13 @@ interface APIResponse {
     };
 }
 
-function App() {
+export default function App() {
     const [url, setUrl] = useState('');
     const [tocItems, setTocItems] = useState<TOCItem[]>([]);
-    const [editedMarkdown, setEditedMarkdown] = useState('');
+    const [markdown, setMarkdown] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-    const [markdownCopySuccess, setMarkdownCopySuccess] = useState(false);
-    const [previewCopySuccess, setPreviewCopySuccess] = useState(false);
+    const [copyStatus, setCopyStatus] = useState<'idle' | 'markdown-copied' | 'preview-copied'>('idle');
 
     const validateUrl = (url: string) => {
         try {
@@ -34,6 +32,32 @@ function App() {
         }
     };
 
+    const generateMarkdown = (items: TOCItem[]) => {
+        return items.map(item => {
+            const indent = '  '.repeat(item.level - 1); // Subtract 1 since level starts at 1
+            return `${indent}- [${item.text}](${item.link})`;
+        }).join('\n');
+    };
+
+    const parseMarkdown = (markdown: string): TOCItem[] => {
+        return markdown.split('\n')
+            .map((line, index) => {
+                const match = line.match(/^(\s*)-\s*\[(.*?)\]\((.*?)\)$/);
+                if (!match) return null;
+
+                const [, indent, text, link] = match;
+                const level = (indent.length / 2) + 17;
+
+                return {
+                    id: `toc-${index}`,
+                    text,
+                    level,
+                    link
+                };
+            })
+            .filter((item): item is TOCItem => item !== null);
+    };
+
     const extractTOC = async () => {
         if (!validateUrl(url)) {
             setError('Please enter a valid preview.freecodecamp.org URL');
@@ -42,16 +66,13 @@ function App() {
 
         setIsLoading(true);
         setError('');
-        setMarkdownCopySuccess(false);
-        setPreviewCopySuccess(false);
+        setCopyStatus('idle');
 
         try {
             const response = await fetch('http://localhost:3000/api/v1/extract-toc', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ previewUrl: url }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ previewUrl: url })
             });
 
             const apiResponse: APIResponse = await response.json();
@@ -60,9 +81,9 @@ function App() {
                 throw new Error(apiResponse.message || 'Failed to extract TOC');
             }
 
+            const generatedMarkdown = generateMarkdown(apiResponse.data.tocItems);
             setTocItems(apiResponse.data.tocItems);
-            const markdown = generateMarkdown(apiResponse.data.tocItems);
-            setEditedMarkdown(markdown);
+            setMarkdown(generatedMarkdown);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
         } finally {
@@ -70,52 +91,26 @@ function App() {
         }
     };
 
-    const generateMarkdown = (items: TOCItem[]) => {
-        return items.map(item => {
-            const indent = '   '.repeat(item.indentLevel);
-            return `${indent}- [${item.text}](${item.link})`;
-        }).join('\n');
+    const handleMarkdownChange = (newMarkdown: string) => {
+        setMarkdown(newMarkdown);
+        setTocItems(parseMarkdown(newMarkdown));
     };
 
     const copyToClipboard = async (text: string, type: 'markdown' | 'preview') => {
         try {
             await navigator.clipboard.writeText(text);
-            if (type === 'markdown') {
-                setMarkdownCopySuccess(true);
-                setTimeout(() => setMarkdownCopySuccess(false), 2000);
-            } else {
-                setPreviewCopySuccess(true);
-                setTimeout(() => setPreviewCopySuccess(false), 2000);
-            }
+            setCopyStatus(type === 'markdown' ? 'markdown-copied' : 'preview-copied');
+            setTimeout(() => setCopyStatus('idle'), 2000);
         } catch (err) {
             console.error(err);
             setError('Failed to copy to clipboard');
         }
     };
 
-    // Effect to update TOC items when markdown changes
-    useEffect(() => {
-        if (editedMarkdown) {
-            const lines = editedMarkdown.split('\n');
-            const newItems = lines.map((line, index) => {
-                const match = line.match(/^(\s*)-\s*\[(.*?)\]\((.*?)\)$/);
-                if (!match) return null;
-
-                const [, indent, text, link] = match;
-                const indentLevel = Math.floor(indent.length / 3);  // 3 spaces per level
-
-                return {
-                    id: `toc-${index}`,
-                    text,
-                    level: indentLevel + 1,
-                    indentLevel,
-                    link
-                };
-            }).filter((item): item is TOCItem => item !== null);
-
-            setTocItems(newItems);
-        }
-    }, [editedMarkdown]);
+    // Helper function to get the minimum level from current TOC items
+    const getMinLevel = (items: TOCItem[]) => {
+        return Math.min(...items.map(item => item.level));
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -175,16 +170,16 @@ function App() {
                                 <div className="flex justify-between items-center">
                                     <h2 className="text-xl font-semibold text-gray-900">Markdown Editor</h2>
                                     <button
-                                        onClick={() => copyToClipboard(editedMarkdown, 'markdown')}
+                                        onClick={() => copyToClipboard(markdown, 'markdown')}
                                         className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
                                     >
                                         <span>📋</span>
-                                        {markdownCopySuccess ? 'Copied!' : 'Copy Markdown'}
+                                        {copyStatus === 'markdown-copied' ? 'Copied!' : 'Copy Markdown'}
                                     </button>
                                 </div>
                                 <textarea
-                                    value={editedMarkdown}
-                                    onChange={(e) => setEditedMarkdown(e.target.value)}
+                                    value={markdown}
+                                    onChange={(e) => handleMarkdownChange(e.target.value)}
                                     className="w-full h-96 p-4 font-mono text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 />
                             </div>
@@ -193,38 +188,41 @@ function App() {
                                 <div className="flex justify-between items-center">
                                     <h2 className="text-xl font-semibold text-gray-900">Preview</h2>
                                     <button
-                                        onClick={() => copyToClipboard(
-                                            tocItems.map(item => {
-                                                const indent = '    '.repeat(item.indentLevel);
-                                                const bullet = item.indentLevel === 0 ? '•' : '○';
-                                                return `${indent}${bullet} ${item.text}`;
-                                            }).join('\n'),
-                                            'preview'
-                                        )}
+                                        onClick={() => {
+                                            const minLevel = getMinLevel(tocItems);
+                                            copyToClipboard(
+                                                tocItems.map(item => {
+                                                    const indent = '  '.repeat(item.level - minLevel);
+                                                    const bullet = item.level === minLevel ? '•' : '○';
+                                                    return `${indent}${bullet} ${item.text}`;
+                                                }).join('\n'),
+                                                'preview'
+                                            );
+                                        }}
                                         className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
                                     >
                                         <span>📋</span>
-                                        {previewCopySuccess ? 'Copied!' : 'Copy Preview'}
+                                        {copyStatus === 'preview-copied' ? 'Copied!' : 'Copy Preview'}
                                     </button>
                                 </div>
                                 <div className="h-96 p-4 bg-gray-50 border border-gray-200 rounded-md overflow-y-auto">
-                                    {tocItems.map((item) => (
-                                        <div
-                                            key={item.id}
-                                            style={{
-                                                marginLeft: `${item.indentLevel * 1.5}rem`,
-                                                fontFamily: 'monospace'
-                                            }}
-                                            className="py-1"
-                                        >
-                                            <a
-                                                href={item.link}
-                                                className="text-gray-900 hover:text-blue-600 no-underline hover:underline"
+                                    {tocItems.length > 0 && (() => {
+                                        const minLevel = getMinLevel(tocItems);
+                                        return tocItems.map((item) => (
+                                            <div
+                                                key={item.id}
+                                                style={{ paddingLeft: `${(item.level - minLevel) * 1.5}rem` }}
+                                                className="py-1 font-mono"
                                             >
-                                                {item.indentLevel === 0 ? '•' : '○'} {item.text}
-                                            </a>
-                                        </div>
-                                    ))}
+                                                <a
+                                                    href={item.link}
+                                                    className="text-gray-900 hover:text-blue-600 no-underline hover:underline"
+                                                >
+                                                    {item.level === minLevel ? '•' : '○'} {item.text}
+                                                </a>
+                                            </div>
+                                        ));
+                                    })()}
                                 </div>
                             </div>
                         </div>
@@ -234,5 +232,3 @@ function App() {
         </div>
     );
 }
-
-export default App;

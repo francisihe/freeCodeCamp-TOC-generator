@@ -2,11 +2,14 @@ import express from 'express';
 import { NODE_ENV, PORT } from './config/constants';
 import extractorRouter from './routes/extractor.route';
 import browserStatusRouter from './routes/browserManager.route';
+import healthRouter from './routes/health.route';
 
 import { corsMiddleware, corsErrorHandler } from './middleware/corsErrorHandler';
 
 const app = express();
 app.use(express.json());
+
+app.use('/health', healthRouter);
 
 app.use(corsMiddleware);
 app.use(corsErrorHandler);

@@ -14,6 +14,21 @@ export const extractTOC = async (req: Request, res: Response): Promise<void> => 
             timeout: PAGE_TIMEOUT
         });
 
+        // Check for error content
+        const isErrorPage = await page.evaluate(() => {
+            const errorElement = document.querySelector('div h2');
+            return errorElement && errorElement.textContent?.includes("Oops, something is not right!");
+        });
+
+        if (isErrorPage) {
+            res.status(404).json({
+                success: false,
+                message: "The requested page could not be loaded. Please verify the URL.",
+            });
+            return;
+        }
+
+        // Extract TOC from article
         const tocItems = await page.evaluate(() => {
             const article = document.querySelector('.post-content');
             if (!article) return [];

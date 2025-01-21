@@ -22,8 +22,11 @@ RUN google-chrome-stable --version
 # Copy package.json and package-lock.json for dependency installation
 COPY package*.json ./
 
-# Install Node.js dependencies
-RUN npm install --production
+# Install dependencies including dev dependencies
+RUN npm install
+
+# Install type definitions
+RUN npm install --save-dev @types/express @types/cors
 
 # Copy the rest of the application source code
 COPY . .

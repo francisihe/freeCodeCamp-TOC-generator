@@ -9,7 +9,9 @@ let browserInitializing: Promise<void> | null = null;
 const createBrowser = async (): Promise<Browser> => {
     return await puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        // args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-accelerated-2d-canvas', '--disable-gpu'],
+        executablePath: '/usr/bin/google-chrome-stable'
     });
 };
 
@@ -21,7 +23,7 @@ const createPage = async (browser: Browser): Promise<Page> => {
 
 const waitForAvailablePage = async (): Promise<Page | null> => {
     const startTime = Date.now();
-    
+
     while (Date.now() - startTime < QUEUE_TIMEOUT) {
         const availablePage = pages.find(p => !p.inUse);
         if (availablePage) {
@@ -30,7 +32,7 @@ const waitForAvailablePage = async (): Promise<Page | null> => {
         }
         await new Promise(resolve => setTimeout(resolve, 100));
     }
-    
+
     return null;
 };
 
@@ -41,14 +43,14 @@ const initializeBrowser = async (): Promise<void> => {
     }
 
     if (browser) return;
-    
+
     browserInitializing = (async () => {
         try {
             browser = await createBrowser();
-            
+
             const page = await createPage(browser);
             pages.push({ page, inUse: false });
-            
+
             browser.on('disconnected', async () => {
                 await cleanup(false);
             });
@@ -68,7 +70,7 @@ const cleanup = async (shouldCloseBrowser: boolean): Promise<void> => {
             console.error('Error closing browser:', error);
         }
     }
-    
+
     pages = [];
     browser = null;
 };
@@ -106,26 +108,26 @@ const getPage = async (): Promise<Page> => {
         if (!browser) {
             await initializeBrowser();
         }
-        
+
         const availablePage = pages.find(p => !p.inUse);
         if (availablePage) {
             availablePage.inUse = true;
             return availablePage.page;
         }
-        
+
         if (browser && pages.length < MAX_PAGES) {
             const newPage = await createPage(browser);
             pages.push({ page: newPage, inUse: true });
             return newPage;
         }
-        
+
         const waitedPage = await waitForAvailablePage();
         if (waitedPage) {
             return waitedPage;
         }
-        
+
         throw new Error('Request timed out while waiting for an available page');
-        
+
     } catch (error) {
         if (error instanceof Error) {
             throw error;

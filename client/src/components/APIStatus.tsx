@@ -20,6 +20,7 @@ export function APIStatus() {
         const response = await fetch("/api/v1/status")
         const data = await response.json()
         setStatus(data.data)
+        console.log("API Status:", data.data)
       } catch (error) {
         console.error("Error fetching API status:", error)
       } finally {
@@ -86,4 +87,3 @@ export function APIStatus() {
     </div>
   )
 }
-

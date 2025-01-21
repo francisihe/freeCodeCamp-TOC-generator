@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Textarea } from "./ui/textarea"
 import { Loader2 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
-
 import { useToast } from "../hooks/use-toast"
 
 const BULLET_POINTS = ['•', '○', '▪', '▫']
@@ -45,20 +44,25 @@ export function TOCExtractor() {
   const parseMarkdown = (markdown: string): TOCItem[] => {
     const lines = markdown.split('\n')
     return lines.map((line, index) => {
+      // Trim the end of the line but preserve leading spaces
+      const workingLine = line.replace(/\s+$/, '')
+      if (!workingLine) return null // Skip empty lines
+
       // Count leading spaces to determine level
-      const leadingSpaces = line.match(/^\s*/)?.[0].length || 0
+      const leadingSpaces = workingLine.match(/^\s*/)?.[0].length || 0
       const level = Math.floor(leadingSpaces / 2) + 1
 
-      // Extract text and link from markdown format
-      const linkMatch = line.match(/^\s*-\s*\[(.*?)\]\((.*?)\)$/)
+      // Extract text and link from markdown format with more lenient whitespace handling
+      const linkMatch = workingLine.match(/^\s*-\s*\[(.*?)\]\((.*?)\).*$/)
       if (!linkMatch) return null
 
       const [, text, link] = linkMatch
+      // Trim any whitespace from text and link
       return {
         id: `toc-${index}`,
-        text,
+        text: text.trim(),
         level,
-        link
+        link: link.trim()
       }
     }).filter((item): item is TOCItem => item !== null)
   }

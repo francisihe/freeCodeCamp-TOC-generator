@@ -6,6 +6,8 @@ import { Textarea } from "./ui/textarea"
 import { Loader2 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 
+import { useToast } from "../hooks/use-toast"
+
 const BULLET_POINTS = ['•', '○', '▪', '▫']
 
 interface TOCItem {
@@ -16,6 +18,8 @@ interface TOCItem {
 }
 
 export function TOCExtractor() {
+  const { toast } = useToast()
+
   const [url, setUrl] = useState("")
   const [markdown, setMarkdown] = useState("")
   const [tocItems, setTocItems] = useState<TOCItem[]>([])
@@ -30,23 +34,33 @@ export function TOCExtractor() {
     return BULLET_POINTS[relativeLevel % BULLET_POINTS.length]
   }
 
+  const generateIndentedMarkdown = (items: TOCItem[]) => {
+    const minLevel = getMinLevel(items)
+    return items.map(item => {
+      const indent = '  '.repeat(item.level - minLevel)
+      return `${indent}- [${item.text}](${item.link})`
+    }).join('\n')
+  }
+
   const parseMarkdown = (markdown: string): TOCItem[] => {
-    return markdown.split('\n')
-      .map((line, index) => {
-        const match = line.match(/^(\s*)-\s*\[(.*?)\]\((.*?)\)$/)
-        if (!match) return null
+    const lines = markdown.split('\n')
+    return lines.map((line, index) => {
+      // Count leading spaces to determine level
+      const leadingSpaces = line.match(/^\s*/)?.[0].length || 0
+      const level = Math.floor(leadingSpaces / 2) + 1
 
-        const [, indent, text, link] = match
-        const level = (indent.length / 2) + 1
+      // Extract text and link from markdown format
+      const linkMatch = line.match(/^\s*-\s*\[(.*?)\]\((.*?)\)$/)
+      if (!linkMatch) return null
 
-        return {
-          id: `toc-${index}`,
-          text,
-          level,
-          link
-        }
-      })
-      .filter((item): item is TOCItem => item !== null)
+      const [, text, link] = linkMatch
+      return {
+        id: `toc-${index}`,
+        text,
+        level,
+        link
+      }
+    }).filter((item): item is TOCItem => item !== null)
   }
 
   const extractTOC = async () => {
@@ -60,10 +74,21 @@ export function TOCExtractor() {
         body: JSON.stringify({ previewUrl: url }),
       })
       const data = await response.json()
-      setMarkdown(data.data.tocItems.map((item: TOCItem) => `- [${item.text}](${item.link})`).join('\n'))
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to extract TOC')
+      }
+
+      const formattedMarkdown = generateIndentedMarkdown(data.data.tocItems)
+      setMarkdown(formattedMarkdown)
       setTocItems(data.data.tocItems)
     } catch (error) {
       console.error("Error extracting TOC:", error)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to extract table of contents",
+      })
     } finally {
       setLoading(false)
     }
@@ -71,7 +96,8 @@ export function TOCExtractor() {
 
   const handleMarkdownChange = (newMarkdown: string) => {
     setMarkdown(newMarkdown)
-    setTocItems(parseMarkdown(newMarkdown))
+    const newTocItems = parseMarkdown(newMarkdown)
+    setTocItems(newTocItems)
   }
 
   return (
@@ -93,7 +119,7 @@ export function TOCExtractor() {
             </Button>
           </div>
           <Textarea
-            className="mt-4 h-[calc(100vh-300px)]"
+            className="mt-4 h-[calc(100vh-300px)] font-mono"
             placeholder="Markdown content will appear here..."
             value={markdown}
             onChange={(e) => handleMarkdownChange(e.target.value)}
@@ -115,7 +141,6 @@ export function TOCExtractor() {
                     <div
                       key={item.id}
                       style={{ paddingLeft: `${(item.level - minLevel) * 1.5}rem` }}
-                    // className="font-mono"
                     >
                       <a
                         href={item.link}

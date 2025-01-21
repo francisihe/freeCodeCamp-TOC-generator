@@ -28,6 +28,9 @@ RUN npm install --production
 # Copy the rest of the application source code
 COPY . .
 
+# Compile TypeScript to JavaScript
+RUN npm run build
+
 # Expose the application port
 EXPOSE 8080
 

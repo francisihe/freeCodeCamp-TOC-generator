@@ -5,7 +5,7 @@ import { MainContent } from "./components/MainContent"
 function App() {
     return (
         <SidebarProvider>
-            <div className="flex h-screen">
+            <div className="flex h-screen w-full">
                 <AppSidebar />
                 <MainContent />
             </div>

@@ -5,7 +5,7 @@ Francis Ihejirika - Initial work - [GitHub Profile - @francisihe](https://github
 
 ### Overview
 
-A simple tool that automatically generates a table of contents for your freeCodeCamp articles from a simple preview link. This project consists of a Node.js/Express backend API that uses Puppeteer for web scraping, and a React frontend built with TypeScript and Tailwind CSS.
+A simple tool that automatically generates a table of content for your freeCodeCamp articles from a simple preview link. This project consists of a Node.js/Express backend API that uses Puppeteer for web scraping, and a React frontend built with TypeScript and Tailwind CSS.
 
 ![freeCodeCamp TOC Generator](client/public/freeCodeCamp-logo.png)
 
@@ -61,7 +61,7 @@ A simple tool that automatically generates a table of contents for your freeCode
 - npm or yarn
 - Google Chrome (for Puppeteer)
 
-### Installation
+## Installation
 
 1. Clone the repository:
 ```
@@ -81,7 +81,8 @@ cd ../client
 npm install
 ```
 
-### Development
+## Development
+
 1. Start the API server:
 ```
 cd api
@@ -103,12 +104,12 @@ QUEUE_TIMEOUT=60000
 PAGE_IDLE_TIMEOUT=30000
 ```
 
-### API Endpoints
+## API Endpoints
 - **POST /api/v1/extract-toc:** Extract table of contents from a freeCodeCamp preview URL
 - GET /api/v1/status: Get current API and browser status
 - GET /health: Check API health status
 
-### Contributing
+## Contributing
 Contributions are welcome! Please follow these steps:
 
 1. Fork the repository
@@ -119,14 +120,13 @@ Contributions are welcome! Please follow these steps:
 6. Push to the branch: git push origin feature/your-feature-name
 7. Submit a pull request
 
-### License
-This project is licensed under the ISC License - see the LICENSE file for details.
 
-### Acknowledgments
+## Acknowledgments
 Built for the freeCodeCamp community
 Uses various open-source libraries and tools
+Shoutout to ShadCN
 
-### Support
+## Support
 For support, please open an issue in the GitHub repository or contact the maintainers.
 
 Built with ❤️ for the freeCodeCamp community

@@ -35,31 +35,38 @@ export function TOCExtractor() {
     return BULLET_POINTS[relativeLevel % BULLET_POINTS.length]
   }
 
+  const extractHashFromUrl = (url: string): string => {
+    try {
+      const urlObj = new URL(url)
+      return urlObj.hash || url
+    } catch {
+      // If URL parsing fails, return the original string if it starts with #
+      return url.startsWith('#') ? url : '#' + url
+    }
+  }
+
   const generateIndentedMarkdown = (items: TOCItem[]) => {
     const minLevel = getMinLevel(items)
     return items.map(item => {
       const indent = '  '.repeat(item.level - minLevel)
-      return `${indent}- [${item.text}](${item.link})`
+      const hash = extractHashFromUrl(item.link)
+      return `${indent}- [${item.text}](${hash})`
     }).join('\n')
   }
 
   const parseMarkdown = (markdown: string): TOCItem[] => {
     const lines = markdown.split('\n')
     return lines.map((line, index) => {
-      // Trim the end of the line but preserve leading spaces
       const workingLine = line.replace(/\s+$/, '')
-      if (!workingLine) return null // Skip empty lines
+      if (!workingLine) return null
 
-      // Count leading spaces to determine level
       const leadingSpaces = workingLine.match(/^\s*/)?.[0].length || 0
       const level = Math.floor(leadingSpaces / 2) + 1
 
-      // Extract text and link from markdown format with more lenient whitespace handling
       const linkMatch = workingLine.match(/^\s*-\s*\[(.*?)\]\((.*?)\).*$/)
       if (!linkMatch) return null
 
       const [, text, link] = linkMatch
-      // Trim any whitespace from text and link
       return {
         id: `toc-${index}`,
         text: text.trim(),
@@ -106,12 +113,61 @@ export function TOCExtractor() {
     setTocItems(newTocItems)
   }
 
+  const getPreviewText = () => {
+    if (tocItems.length === 0) return ""
+    const minLevel = getMinLevel(tocItems)
+    
+    const lines = tocItems.map(item => {
+      const level = item.level - minLevel
+      const bullet = getBulletPoint(item.level, minLevel)
+      // const indent = '\u00A0\u00A0\u00A0\u00A0'.repeat(level)
+      const hash = extractHashFromUrl(item.link)
+      
+      return `<p class="m-0 whitespace-nowrap overflow-hidden text-ellipsis" style="padding-left: ${level * 1.5}rem">
+        <span class="inline-block min-w-[1em]">${bullet}</span>
+        <a href="${hash}" class="inline-block">${item.text}</a>
+      </p>`
+    })
+  
+    return `<div class="space-y-1">${lines.join('')}</div>`
+  }
+  
   const copyToClipboard = async (text: string, type: 'markdown' | 'preview') => {
     const setState = type === 'markdown' ? setCopyingMarkdown : setCopyingPreview
-
+  
     try {
       setState(true)
-      await navigator.clipboard.writeText(text)
+      
+      if (type === 'preview') {
+        const tempDiv = document.createElement('div')
+        tempDiv.innerHTML = text
+        
+        const plainText = tocItems.map(item => {
+          const level = item.level - getMinLevel(tocItems)
+          const bullet = getBulletPoint(item.level, getMinLevel(tocItems))
+          const indent = '    '.repeat(level)
+          const hash = extractHashFromUrl(item.link)
+          return `${indent}${bullet} ${item.text} ${hash}`
+        }).join('\n')
+  
+        const clipboardItem = new ClipboardItem({
+          'text/html': new Blob([tempDiv.outerHTML], { type: 'text/html' }),
+          'text/plain': new Blob([plainText], { type: 'text/plain' })
+        })
+        
+        await navigator.clipboard.write([clipboardItem])
+      } else {
+        // For markdown copying
+        const hashOnlyMarkdown = tocItems.map(item => {
+          const level = item.level - getMinLevel(tocItems)
+          const indent = '  '.repeat(level)
+          const hash = extractHashFromUrl(item.link)
+          return `${indent}- [${item.text}](${hash})`
+        }).join('\n')
+        
+        await navigator.clipboard.writeText(hashOnlyMarkdown)
+      }
+  
       toast({
         title: "Copied!",
         description: `${type === 'markdown' ? 'Markdown' : 'Preview'} copied to clipboard`,
@@ -126,15 +182,6 @@ export function TOCExtractor() {
     } finally {
       setTimeout(() => setState(false), 2000)
     }
-  }
-
-  const getPreviewText = () => {
-    if (tocItems.length === 0) return ""
-    const minLevel = getMinLevel(tocItems)
-    return tocItems.map(item => {
-      const indent = "  ".repeat(item.level - minLevel)
-      return `${indent}${getBulletPoint(item.level, minLevel)} ${item.text}`
-    }).join("\n")
   }
 
   return (
@@ -196,26 +243,27 @@ export function TOCExtractor() {
         </CardHeader>
         <CardContent>
           <div className="prose dark:prose-invert h-[calc(100vh-250px)] overflow-auto">
-            {tocItems.length > 0 && (() => {
-              const minLevel = getMinLevel(tocItems)
-              return (
-                <div className="space-y-1">
-                  {tocItems.map((item) => (
-                    <div
-                      key={item.id}
-                      style={{ paddingLeft: `${(item.level - minLevel) * 1.5}rem` }}
+            {tocItems.length > 0 && (
+              <div className="space-y-1">
+                {tocItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="whitespace-nowrap overflow-hidden text-ellipsis"
+                    style={{ paddingLeft: `${(item.level - getMinLevel(tocItems)) * 1.5}rem` }}
+                  >
+                    <span className="inline-block min-w-[1em]">
+                      {getBulletPoint(item.level, getMinLevel(tocItems))}
+                    </span>
+                    <a
+                      href={extractHashFromUrl(item.link)}
+                      className="inline-block text-gray-900 hover:text-blue-600 no-underline hover:underline"
                     >
-                      <a
-                        href={item.link}
-                        className="text-gray-900 hover:text-blue-600 no-underline hover:underline"
-                      >
-                        {getBulletPoint(item.level, minLevel)} {item.text}
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              )
-            })()}
+                      {item.text}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
             {!tocItems.length && <ReactMarkdown>{markdown}</ReactMarkdown>}
           </div>
         </CardContent>
@@ -223,3 +271,5 @@ export function TOCExtractor() {
     </div>
   )
 }
+
+export default TOCExtractor

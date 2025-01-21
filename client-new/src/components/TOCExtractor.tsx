@@ -82,11 +82,11 @@ export function TOCExtractor() {
         </CardHeader>
         <CardContent>
           <div className="flex space-x-2">
-            <Input 
-              type="url" 
-              placeholder="Enter article URL" 
-              value={url} 
-              onChange={(e) => setUrl(e.target.value)} 
+            <Input
+              type="url"
+              placeholder="Enter article URL"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
             />
             <Button onClick={extractTOC} disabled={loading}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Extract"}
@@ -100,7 +100,7 @@ export function TOCExtractor() {
           />
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Preview</CardTitle>
@@ -115,7 +115,7 @@ export function TOCExtractor() {
                     <div
                       key={item.id}
                       style={{ paddingLeft: `${(item.level - minLevel) * 1.5}rem` }}
-                      // className="font-mono"
+                    // className="font-mono"
                     >
                       <a
                         href={item.link}

@@ -1,6 +1,8 @@
-import { Command, BookOpen, Activity, Linkedin, Mail, Twitter } from "lucide-react"
+import { BookOpen, Activity, Linkedin, Mail, Twitter } from "lucide-react"
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "./ui/sidebar"
 import { Card, CardContent } from "./ui/card"
+
+import freeCodeCampLogo from '/freeCodeCamp-logo.png'
 
 export function AppSidebar() {
     return (
@@ -12,7 +14,7 @@ export function AppSidebar() {
                             <SidebarMenuButton size="lg" asChild>
                                 <a href="#">
                                     <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                                        <Command className="size-4" />
+                                        <img src={freeCodeCampLogo} alt="FCC TOC Extractor" className="size-7 rounded-lg" />
                                     </div>
                                     <div className="grid flex-1 text-left text-sm leading-tight">
                                         <span className="truncate font-semibold">FCC TOC Extractor</span>
@@ -24,7 +26,7 @@ export function AppSidebar() {
                     </SidebarMenu>
                 </SidebarHeader>
                 <SidebarContent>
-                    <SidebarMenu>
+                    <SidebarMenu className="mt-10 pl-2">
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 onClick={() => window.location.hash = 'extractor'}

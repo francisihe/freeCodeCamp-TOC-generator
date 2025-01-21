@@ -3,7 +3,7 @@ import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Textarea } from "./ui/textarea"
-import { Loader2 } from "lucide-react"
+import { Loader2, Copy, Check } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import { useToast } from "../hooks/use-toast"
 
@@ -23,6 +23,8 @@ export function TOCExtractor() {
   const [markdown, setMarkdown] = useState("")
   const [tocItems, setTocItems] = useState<TOCItem[]>([])
   const [loading, setLoading] = useState(false)
+  const [copyingMarkdown, setCopyingMarkdown] = useState(false)
+  const [copyingPreview, setCopyingPreview] = useState(false)
 
   const getMinLevel = (items: TOCItem[]) => {
     return Math.min(...items.map(item => item.level))
@@ -104,11 +106,55 @@ export function TOCExtractor() {
     setTocItems(newTocItems)
   }
 
+  const copyToClipboard = async (text: string, type: 'markdown' | 'preview') => {
+    const setState = type === 'markdown' ? setCopyingMarkdown : setCopyingPreview
+
+    try {
+      setState(true)
+      await navigator.clipboard.writeText(text)
+      toast({
+        title: "Copied!",
+        description: `${type === 'markdown' ? 'Markdown' : 'Preview'} copied to clipboard`,
+      })
+    } catch (error) {
+      console.error("Error copying to clipboard:", error)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to copy to clipboard",
+      })
+    } finally {
+      setTimeout(() => setState(false), 2000)
+    }
+  }
+
+  const getPreviewText = () => {
+    if (tocItems.length === 0) return ""
+    const minLevel = getMinLevel(tocItems)
+    return tocItems.map(item => {
+      const indent = "  ".repeat(item.level - minLevel)
+      return `${indent}${getBulletPoint(item.level, minLevel)} ${item.text}`
+    }).join("\n")
+  }
+
   return (
     <div className="grid gap-6 md:grid-cols-2 md:w-contain">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Extract Table of Contents</CardTitle>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => copyToClipboard(markdown, 'markdown')}
+            disabled={!markdown || copyingMarkdown}
+          >
+            {copyingMarkdown ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+            <span className="ml-2">Copy</span>
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="flex space-x-2">
@@ -132,8 +178,21 @@ export function TOCExtractor() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Preview</CardTitle>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => copyToClipboard(getPreviewText(), 'preview')}
+            disabled={!tocItems.length || copyingPreview}
+          >
+            {copyingPreview ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+            <span className="ml-2">Copy</span>
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="prose dark:prose-invert h-[calc(100vh-250px)] overflow-auto">

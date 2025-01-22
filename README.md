@@ -18,6 +18,11 @@ A simple tool that automatically generates a table of content for your freeCodeC
 - 📋 One-click copying of generated content
 - 🔄 Auto-updating preview as you edit
 
+## Deployment Links
+- Frontend: https://freecodecamp-toc-generator.netlify.app/
+- API Deployment: [hidden]
+- Postman Documentation: https://documenter.getpostman.com/view/30177617/2sAYQdjABz
+
 ## Tech Stack
 
 ### Backend (API)

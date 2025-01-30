@@ -7,7 +7,9 @@ Francis Ihejirika - Initial work - [GitHub Profile - @francisihe](https://github
 
 A simple tool that automatically generates a table of content for your freeCodeCamp articles from a simple preview link. This project consists of a Node.js/Express backend API that uses Puppeteer for web scraping, and a React frontend built with TypeScript and Tailwind CSS.
 
-![freeCodeCamp TOC Generator](client/public/freeCodeCamp-logo.png)
+<img src="client/public/freeCodeCamp-logo.png" alt="freeCodeCamp TOC Generator" width="100" height="auto">
+
+![Demo GIF](<media/freecodecamp 20TOC 20generator.gif>)
 
 ## Features
 

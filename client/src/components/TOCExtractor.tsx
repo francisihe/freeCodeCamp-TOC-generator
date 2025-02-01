@@ -209,7 +209,7 @@ export function TOCExtractor() {
               type="url"
               placeholder="Enter article URL"
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={(e) => setUrl(e.target.value.trim())}
             />
             <Button onClick={extractTOC} disabled={loading}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Extract"}
